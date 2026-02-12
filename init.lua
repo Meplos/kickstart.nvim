@@ -497,6 +497,21 @@ require('lazy').setup({
           if client and client:supports_method('textDocument/inlayHint', event.buf) then
             map('<leader>th', function() vim.lsp.inlay_hint.enable(not vim.lsp.inlay_hint.is_enabled { bufnr = event.buf }) end, '[T]oggle Inlay [H]ints')
           end
+
+          -- Enable semantic tokens and keep codelens up to date when supported.
+          if client and client.server_capabilities.semanticTokensProvider then
+            vim.lsp.semantic_tokens.start(event.buf, event.data.client_id)
+          end
+
+          if client and client:supports_method('textDocument/codeLens', event.buf) then
+            local codelens_augroup = vim.api.nvim_create_augroup('kickstart-lsp-codelens', { clear = false })
+            vim.api.nvim_create_autocmd({ 'BufEnter', 'CursorHold', 'InsertLeave' }, {
+              buffer = event.buf,
+              group = codelens_augroup,
+              callback = vim.lsp.codelens.refresh,
+            })
+            map('<leader>cl', vim.lsp.codelens.run, '[C]ode[L]ens')
+          end
         end,
       })
 
@@ -511,7 +526,38 @@ require('lazy').setup({
       --  See `:help lsp-config` for information about keys and how to configure
       local servers = {
         -- clangd = {},
-        -- gopls = {},
+        gopls = {
+          settings = {
+            gopls = {
+              gofumpt = true,
+              completeUnimported = true,
+              usePlaceholders = true,
+              staticcheck = true,
+              codelenses = {
+                generate = true,
+                gc_details = true,
+                test = true,
+                tidy = true,
+                vendor = true,
+              },
+              analyses = {
+                unusedparams = true,
+                nilness = true,
+                shadow = true,
+                unusedwrite = true,
+              },
+              hints = {
+                assignVariableTypes = true,
+                compositeLiteralFields = true,
+                compositeLiteralTypes = true,
+                constantValues = true,
+                functionTypeParameters = true,
+                parameterNames = true,
+                rangeVariableTypes = true,
+              },
+            },
+          },
+        },
         -- pyright = {},
         -- rust_analyzer = {},
         --
@@ -575,7 +621,6 @@ require('lazy').setup({
         'gofumpt',
         'gotests',
         'delve',
-        'gospel',
         -- You can add other tools here that you want Mason to install
       })
 
@@ -646,6 +691,8 @@ require('lazy').setup({
             or vim.bo[bufnr].filetype == 'typescriptreact'
           then
             timeout_ms = 4000
+          elseif vim.bo[bufnr].filetype == 'go' then
+            timeout_ms = 1500
           end
 
           return {
@@ -660,6 +707,7 @@ require('lazy').setup({
         javascriptreact = { 'eslint_d' },
         typescript = { 'eslint_d' },
         typescriptreact = { 'eslint_d' },
+        go = { 'gofumpt', 'goimports' },
         -- Conform can also run multiple formatters sequentially
         -- python = { "isort", "black" },
         --
