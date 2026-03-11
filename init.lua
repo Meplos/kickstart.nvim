@@ -53,6 +53,14 @@ vim.o.timeoutlen = 300
 vim.o.splitright = true
 vim.o.splitbelow = true
 
+-- Filetype detection (ensure Kotlin scripts are recognized as kotlinscript)
+vim.filetype.add {
+  extension = {
+    kts = 'kotlinscript',
+    kt = 'kotlin',
+  },
+}
+
 -- Sets how neovim will display certain whitespace characters in the editor.
 --  See `:help 'list'`
 --  and `:help 'listchars'`
@@ -525,6 +533,7 @@ require('lazy').setup({
       --  See `:help lsp-config` for information about keys and how to configure
       local servers = {
         -- clangd = {},
+        kotlin = { ft = { 'kotlin', 'kotlinscript' } },
         gopls = {
           settings = {
             gopls = {
@@ -614,6 +623,8 @@ require('lazy').setup({
         'stylua', -- Used to format Lua code
         'eslint_d',
         'vtsls',
+        'kotlin-lsp',
+        'ktlint',
         'gopls',
         'goimports',
         'golines',
@@ -702,10 +713,11 @@ require('lazy').setup({
       end,
       formatters_by_ft = {
         lua = { 'stylua' },
-        javascript = { 'eslint_d' },
-        javascriptreact = { 'eslint_d' },
-        typescript = { 'eslint_d' },
-        typescriptreact = { 'eslint_d' },
+        javascript = { 'prettierd', 'prettier', stop_after_first = true },
+        javascriptreact = { 'prettierd', 'prettier', stop_after_first = true },
+        typescript = { 'prettierd', 'prettier', stop_after_first = true },
+        typescriptreact = { 'prettierd', 'prettier', stop_after_first = true },
+        kotlin = { 'ktlint' },
         go = { 'gofumpt', 'goimports' },
         -- Conform can also run multiple formatters sequentially
         -- python = { "isort", "black" },
